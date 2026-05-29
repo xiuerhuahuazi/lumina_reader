@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:wght@300;400;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-lumina-bg: #0f0f0f;
+  --color-lumina-text: #e6e4df;
+  --color-lumina-text-muted: #8c8c8c;
+  --color-lumina-accent: #8bb8b0;
+  --color-lumina-border: rgba(230, 228, 223, 0.1);
+  --color-lumina-border-light: rgba(230, 228, 223, 0.05);
+  --color-lumina-hover: rgba(255, 255, 255, 0.04);
+  --color-lumina-active: rgba(255, 255, 255, 0.08);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Merriweather", ui-serif, Georgia, serif;
+}
+
+@layer base {
+  body {
+    @apply bg-lumina-bg text-lumina-text font-sans antialiased overflow-hidden selection:bg-lumina-accent/30 selection:text-lumina-text;
+  }
+  
+  /* Custom scrollbar for webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-lumina-border rounded-full hover:bg-lumina-text-muted;
+  }
+
+  .prose-lumina {
+    --tw-prose-body: var(--color-lumina-text);
+    --tw-prose-headings: var(--color-lumina-text);
+    --tw-prose-links: var(--color-lumina-accent);
+    --tw-prose-bold: var(--color-lumina-text);
+    --tw-prose-quotes: var(--color-lumina-text-muted);
+    --tw-prose-quote-borders: var(--color-lumina-accent);
+    --tw-prose-code: var(--color-lumina-text);
+    --tw-prose-pre-code: var(--color-lumina-text);
+    --tw-prose-pre-bg: var(--color-lumina-bg);
+    --tw-prose-hr: var(--color-lumina-border);
+  }
+  
+  .prose-lumina p {
+    @apply leading-[1.8] mb-6;
+  }
+  
+  .prose-lumina h2, .prose-lumina h3, .prose-lumina h4 {
+    @apply font-sans font-medium mt-12 mb-6;
+  }
+  
+  .prose-lumina img {
+    @apply rounded-lg max-w-full h-auto;
+  }
+}
