@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Added — 2026-05-29
+- 阅读元数据本地优先持久化架构：Dexie IndexedDB 本地数据库 + SyncManager 后台同步队列 + useArticleState 统一读写 hook (`src/db/localDb.ts`, `src/services/syncManager.ts`, `src/hooks/useArticleState.ts`)
+- 已读/未读状态即时持久化到 IndexedDB，页面刷新后状态不丢失 (`src/App.tsx`)
+- 星标状态持久化，Reader 中 Star 按钮可点击切换并填充 accent 色 (`src/components/Reader.tsx`)
+- SyncManager 智能同步：2s 防抖批量写入、requestIdleCallback 空闲同步、beforeunload 关闭前推送、失败自动重试（最多 5 次）、页面隐藏时暂停
+- BroadcastChannel 多 Tab 同步：一个 Tab 标记已读/星标后其他 Tab 实时更新 (`src/hooks/useArticleState.ts`)
+- 启动时 IndexedDB 本地状态与服务端 PG 状态合并，本地优先策略
+
+### Fixed — 2026-05-29
+- 修复 `/api/articles/read` 和 `/api/articles/star` 端点互相覆盖状态的问题：新增 `updateArticleReadState`/`updateArticleStarState` 仅更新目标字段，read/star 操作不再互斥 (`src/db.ts`, `server.ts`)
+
 ### Added — 2026-05-28
 - PostgreSQL 持久化层（`src/db.ts`）：feeds/groups/article_texts/article_states 四表，替代内存 Map 存储，重启数据不丢失 (`src/db.ts`, `server.ts`)
 - 订阅源持久化开关：FeedManager 中每个 feed 可独立开启/关闭数据持久化，开启后文章正文自动写入 PG，关闭后已有数据保留不动 (`FeedManager.tsx`, `server.ts`, `App.tsx`)

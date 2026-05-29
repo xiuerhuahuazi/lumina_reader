@@ -17,9 +17,11 @@ interface ReaderProps {
   totalCount?: number;
   onToggleRead?: () => void;
   isRead?: boolean;
+  onToggleStar?: () => void;
+  isStarred?: boolean;
 }
 
-export default function Reader({ article, onClose, className, onToggleFocus, isFocused, onNavigatePrev, onNavigateNext, currentIndex, totalCount, onToggleRead, isRead }: ReaderProps) {
+export default function Reader({ article, onClose, className, onToggleFocus, isFocused, onNavigatePrev, onNavigateNext, currentIndex, totalCount, onToggleRead, isRead, onToggleStar, isStarred }: ReaderProps) {
   const [scrollY, setScrollY] = useState(0);
   const [isSerif, setIsSerif] = useState(true);
 
@@ -78,7 +80,9 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
         </button>
         <div className="flex items-center gap-4 text-lumina-text-muted">
           <button className="hover:text-lumina-text"><Mail className="w-4 h-4" /></button>
-          <button className="hover:text-lumina-text"><Star className="w-4 h-4" /></button>
+          <button className="hover:text-lumina-text" onClick={onToggleStar} title={isStarred ? '取消星标' : '添加星标'}>
+            <Star className={cn("w-4 h-4", isStarred && "fill-lumina-accent text-lumina-accent")} />
+          </button>
           <button className="hover:text-lumina-text" onClick={onToggleRead} title={isRead ? '标为未读' : '标为已读'}>
             <CheckCircle className={cn("w-4 h-4", isRead && "text-lumina-accent")} />
           </button>
@@ -105,7 +109,9 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
           </button>
           <div className="flex items-center gap-5">
             <button className="hover:text-lumina-text focus:outline-none"><Mail className="w-4 h-4" /></button>
-            <button className="hover:text-lumina-text focus:outline-none"><Star className="w-4 h-4" /></button>
+            <button className="hover:text-lumina-text focus:outline-none" onClick={onToggleStar} title={isStarred ? '取消星标' : '添加星标'}>
+              <Star className={cn("w-4 h-4", isStarred && "fill-lumina-accent text-lumina-accent")} />
+            </button>
             <button className="hover:text-lumina-text focus:outline-none" onClick={onToggleRead} title={isRead ? '标为未读' : '标为已读'}>
               <CheckCircle className={cn("w-4 h-4", isRead && "text-lumina-accent")} />
             </button>

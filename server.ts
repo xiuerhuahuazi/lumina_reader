@@ -6,6 +6,7 @@ import {
   initTables, getFeeds, upsertFeed, deleteFeed,
   getGroups, upsertGroup, deleteGroup,
   upsertArticleTexts, getArticleStates, upsertArticleState,
+  updateArticleReadState, updateArticleStarState,
 } from "./src/db";
 
 const parser = new Parser();
@@ -444,12 +445,7 @@ async function startServer() {
   app.post("/api/articles/read", async (req, res) => {
     const { guid, feedId, isRead } = req.body;
     if (!guid) return res.status(400).json({ error: "guid is required" });
-    await upsertArticleState({
-      guid,
-      feed_id: feedId || '',
-      is_read: !!isRead,
-      is_starred: false,
-    });
+    await updateArticleReadState(guid, feedId || '', !!isRead);
     res.json({ success: true });
   });
 
@@ -457,15 +453,8 @@ async function startServer() {
     const { guid, feedId, title, content, url, source, summary, tags, publishedAt } = req.body;
     if (!guid) return res.status(400).json({ error: "guid is required" });
 
-    // Upsert article state
-    await upsertArticleState({
-      guid,
-      feed_id: feedId || '',
-      is_read: false,
-      is_starred: true,
-    });
+    await updateArticleStarState(guid, feedId || '', true);
 
-    // Also persist content when staring
     if (title && url) {
       await upsertArticleTexts([{
         id: guid,
@@ -486,12 +475,7 @@ async function startServer() {
   app.post("/api/articles/unstar", async (req, res) => {
     const { guid } = req.body;
     if (!guid) return res.status(400).json({ error: "guid is required" });
-    await upsertArticleState({
-      guid,
-      feed_id: '',
-      is_read: false,
-      is_starred: false,
-    });
+    await updateArticleStarState(guid, '', false);
     res.json({ success: true });
   });
 

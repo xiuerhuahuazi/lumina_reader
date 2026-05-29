@@ -227,6 +227,26 @@ export async function upsertArticleState(state: DbArticleState): Promise<void> {
   );
 }
 
+export async function updateArticleReadState(guid: string, feedId: string, isRead: boolean): Promise<void> {
+  await pool.query(
+    `INSERT INTO article_states (guid, feed_id, is_read, is_starred)
+     VALUES ($1, $2, $3, false)
+     ON CONFLICT (guid) DO UPDATE SET
+       is_read = $3`,
+    [guid, feedId, isRead]
+  );
+}
+
+export async function updateArticleStarState(guid: string, feedId: string, isStarred: boolean): Promise<void> {
+  await pool.query(
+    `INSERT INTO article_states (guid, feed_id, is_read, is_starred)
+     VALUES ($1, $2, false, $3)
+     ON CONFLICT (guid) DO UPDATE SET
+       is_starred = $3`,
+    [guid, feedId, isStarred]
+  );
+}
+
 export async function batchUpsertArticleStates(states: DbArticleState[]): Promise<void> {
   for (const s of states) {
     await upsertArticleState(s);

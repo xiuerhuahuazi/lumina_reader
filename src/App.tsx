@@ -12,6 +12,7 @@ import GroupManager from './components/GroupManager';
 import { Article, Feed, SmartGroup, FetchFrequency } from './types';
 import { cn } from './utils';
 import { Menu } from 'lucide-react';
+import { useArticleState, loadLocalStates } from './hooks/useArticleState';
 
 const FEED_COLORS = ['#e53e3e', '#3182ce', '#319795', '#dd6b20'];
 
@@ -100,7 +101,8 @@ export default function App() {
 
     allArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-    setArticles(allArticles);
+    const merged = await loadLocalStates(allArticles);
+    setArticles(merged);
     setFeeds(parsedFeeds);
   };
 
@@ -196,11 +198,7 @@ export default function App() {
 
   const selectedArticle = articles.find(a => a.id === selectedArticleId) || null;
 
-  const toggleArticleRead = useCallback((articleId: string) => {
-    setArticles(prev => prev.map(a =>
-      a.id === articleId ? { ...a, isRead: !a.isRead } : a
-    ));
-  }, []);
+  const { markRead, markUnread, toggleRead, toggleStar } = useArticleState({ articles, setArticles });
 
   const filteredArticles = (() => {
     let result = articles;
@@ -240,11 +238,9 @@ export default function App() {
     }
     if (targetId) {
       setSelectedArticleId(targetId);
-      setArticles(prev => prev.map(a =>
-        a.id === targetId ? { ...a, isRead: true } : a
-      ));
+      markRead(targetId);
     }
-  }, [filteredArticles, selectedArticleId]);
+  }, [filteredArticles, selectedArticleId, markRead]);
 
   const filteredIndex = filteredArticles.findIndex(a => a.id === selectedArticleId);
   const filteredTotal = filteredArticles.length;
@@ -285,7 +281,7 @@ export default function App() {
           break;
         case 'm':
           if (selectedArticleId) {
-            toggleArticleRead(selectedArticleId);
+            toggleRead(selectedArticleId);
           }
           break;
         case '/':
@@ -298,14 +294,12 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedArticleId, navigateArticle, toggleArticleRead]);
+  }, [selectedArticleId, navigateArticle, toggleRead]);
 
   const handleSelectArticle = (article: Article) => {
     setSelectedArticleId(article.id);
     if (!article.isRead) {
-      setArticles(prev => prev.map(a =>
-        a.id === article.id ? { ...a, isRead: true } : a
-      ));
+      markRead(article.id);
     }
   };
 
@@ -401,8 +395,10 @@ export default function App() {
             onNavigateNext={() => navigateArticle('next')}
             currentIndex={filteredIndex}
             totalCount={filteredTotal}
-            onToggleRead={() => selectedArticleId && toggleArticleRead(selectedArticleId)}
+            onToggleRead={() => selectedArticleId && toggleRead(selectedArticleId)}
+            onToggleStar={() => selectedArticleId && toggleStar(selectedArticleId)}
             isRead={selectedArticle?.isRead}
+            isStarred={selectedArticle?.isStarred}
           />
         </div>
       </div>
