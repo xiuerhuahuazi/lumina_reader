@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useRef } from "react";
 import { cn } from "../utils";
 import { Article } from "../types";
 import {
-  ChevronLeft, Mail, Star, Type, Link as LinkIcon, Maximize, MoreHorizontal, X, CheckCircle
+  ChevronLeft, Mail, Star, Type, Maximize, MoreHorizontal, X, CheckCircle
 } from "lucide-react";
 
 interface ReaderProps {
@@ -21,12 +21,13 @@ interface ReaderProps {
   isStarred?: boolean;
 }
 
-export default function Reader({ article, onClose, className, onToggleFocus, isFocused, onNavigatePrev, onNavigateNext, currentIndex, totalCount, onToggleRead, isRead, onToggleStar, isStarred }: ReaderProps) {
+function Reader({ article, onClose, className, onToggleFocus, isFocused, onNavigatePrev, onNavigateNext, currentIndex, totalCount, onToggleRead, isRead, onToggleStar, isStarred }: ReaderProps) {
   const [scrollY, setScrollY] = useState(0);
   const [isSerif, setIsSerif] = useState(true);
 
   // Transition effect state
   const [isVisible, setIsVisible] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (article) {
@@ -36,11 +37,11 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
     }
   }, [article]);
 
-  const handleOpenSource = () => {
-    if (article?.url) {
-      window.open(article.url, '_blank', 'noopener,noreferrer');
+  useEffect(() => {
+    if (bodyRef.current && article) {
+      bodyRef.current.innerHTML = article.content;
     }
-  };
+  }, [article?.content]);
 
   if (!article) {
     return (
@@ -87,7 +88,6 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
             <CheckCircle className={cn("w-4 h-4", isRead && "text-lumina-accent")} />
           </button>
           <button className="hover:text-lumina-text" onClick={() => setIsSerif(!isSerif)}><Type className="w-4 h-4" /></button>
-          <button className="hover:text-lumina-text" onClick={handleOpenSource}><LinkIcon className="w-4 h-4" /></button>
           <button className="hover:text-lumina-text" onClick={onToggleFocus}><Maximize className="w-4 h-4" /></button>
           <button className="hover:text-lumina-text"><MoreHorizontal className="w-4 h-4" /></button>
         </div>
@@ -118,7 +118,6 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
             <button className="hover:text-lumina-text focus:outline-none flex font-serif italic font-semibold text-lg items-center" onClick={() => setIsSerif(!isSerif)}>
                <span className="leading-none text-base mr-0.5">A</span>a
             </button>
-            <button className="hover:text-lumina-text focus:outline-none" onClick={handleOpenSource}><LinkIcon className="w-4 h-4" /></button>
             <button className="hover:text-lumina-text focus:outline-none" onClick={onToggleFocus}><Maximize className="w-4 h-4" /></button>
             <button className="hover:text-lumina-text focus:outline-none"><MoreHorizontal className="w-4 h-4" /></button>
           </div>
@@ -133,8 +132,19 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
             <span>{article.source}</span>
             <span>·</span>
             <span className="tabular-nums">{article.publishedAt}</span>
-            {article.source === "The Verge" && <span>·</span>}
-            {article.source === "The Verge" && <span>作者：Victoria Song</span>}
+            {article.url && (
+              <>
+                <span>·</span>
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lumina-accent/80 hover:text-lumina-accent transition-colors"
+                >
+                  原文链接
+                </a>
+              </>
+            )}
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -147,12 +157,12 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
         </div>
 
         {/* Article Body */}
-        <div 
+        <div
+          ref={bodyRef}
           className={cn(
             "prose prose-invert prose-lumina max-w-none leading-[1.7] text-[16px] sm:text-[17px] pb-10",
             isSerif ? "font-serif" : "font-sans"
           )}
-          dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
       </div>
@@ -203,3 +213,5 @@ export default function Reader({ article, onClose, className, onToggleFocus, isF
     </div>
   );
 }
+
+export default memo(Reader);

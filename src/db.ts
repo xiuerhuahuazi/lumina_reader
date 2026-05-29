@@ -3,8 +3,7 @@ import pg from 'pg';
 const { Pool } = pg;
 
 const pool = new Pool({
-  database: 'lumina_reader',
-  host: '/var/run/postgresql',
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/lumina_reader',
 });
 
 export interface DbFeed {

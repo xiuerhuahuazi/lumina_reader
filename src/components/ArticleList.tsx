@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { cn } from "../utils";
 import { Search, LayoutList, Grip, ChevronRight } from "lucide-react";
 import { Article } from "../types";
@@ -10,7 +10,7 @@ interface ArticleListProps {
   selectedArticleId: string | null;
 }
 
-export default function ArticleList({ className, articles, onSelectArticle, selectedArticleId }: ArticleListProps) {
+function ArticleList({ className, articles, onSelectArticle, selectedArticleId }: ArticleListProps) {
   const [onlyUnread, setOnlyUnread] = useState(false);
   
   const filteredArticles = onlyUnread ? articles.filter(a => !a.isRead) : articles;
@@ -122,3 +122,5 @@ export default function ArticleList({ className, articles, onSelectArticle, sele
     </div>
   );
 }
+
+export default memo(ArticleList);

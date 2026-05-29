@@ -5,6 +5,27 @@
 ## [Unreleased]
 
 ### Added — 2026-05-29
+- RSSHub 深度集成：统一端口 3000，Express 代理 /rss/* 到内部 RSSHub 实例（端口 1201），`server.ts` 启动脚本 `start.sh`
+- RSSHub 路由浏览：FeedManager 新增「浏览 RSSHub」Tab，搜索平台、展开路由、一键订阅 (`src/components/FeedManager.tsx`)
+- RSSHub 路由列表 API：`GET /api/rsshub/routes` 返回全部命名空间与路由 (`server.ts`)
+- RSSHub `/routes.json` 端点：`app-bootstrap.tsx` 新增路由元数据查询，100+ 平台路由可通过 JSON 获取 (`../RSSHub/lib/app-bootstrap.tsx`)
+- AI HOT 路由参数化：`/rss/aihot/feed/:type?` 支持 feed/all/daily 三种类型 (`../RSSHub/lib/routes/aihot/feed.ts`)
+- Moerats B站路由：`/rss/moerats/bilibili/:id` 代理 moerats.com 的 B站 RSS 服务 (`../RSSHub/lib/routes/moerats/`)
+- RSSHub 类型定义：`RSSHubRoute`、`RSSHubNamespace` 接口 (`src/types.ts`)
+- RSSHub 前端服务层：`fetchRSSHubRoutes()` API 客户端 (`src/services/rsshub.ts`)
+- 默认订阅源改为走 `/rss/aihot/feed` 本地代理 (`server.ts`)
+- Reader 文章头部添加「原文链接」文字超链接，与来源、日期水平排列，用 `·` 分隔 (`src/components/Reader.tsx`)
+
+### Fixed — 2026-05-29
+- 修复 fetchFeed 内部 URL 拼接未去除 /rss/ 前缀导致 RSSHub 代理订阅返回 404 (`server.ts`)
+- 修复 Reader 中原文链接按钮被移除后残留的 LinkIcon 引用导致 React 渲染崩溃白屏 (`src/components/Reader.tsx`)
+- 修复 CDP 代理 IPv6 兼容性问题：代理原使用 127.0.0.1，macOS Chrome 绑定 [::1]，改用 /json/version 发现机制 (`~/.claude/skills/web-access/scripts/cdp-proxy.mjs`)
+- B站视频 iframe 替换：将 `blackboard/html5mobileplayer.html`（B站防盗链，第三方不可播放）替换为 `player.bilibili.com/player.html` 官方嵌入播放器 (`server.ts`)
+- React 性能优化：Sidebar/ArticleList/Reader 添加 React.memo 阻止无效重渲染，filteredArticles/feedsWithCounts/selectedArticle 改用 useMemo 稳定引用，navigateArticle 用 ref 替代动态依赖避免 useCallback 失效 (`App.tsx`, `Sidebar.tsx`, `ArticleList.tsx`, `Reader.tsx`)
+- 修复 Sidebar 重构时 className 参数被误删导致 ReferenceError (`src/components/Sidebar.tsx`)
+- 修复 Reader 滚动时 B站视频 iframe 重复刷新：dangerouslySetInnerHTML 改为 ref + useEffect 仅在内容变化时更新 DOM (`src/components/Reader.tsx`)
+
+### Added — 2026-05-29
 - 阅读元数据本地优先持久化架构：Dexie IndexedDB 本地数据库 + SyncManager 后台同步队列 + useArticleState 统一读写 hook (`src/db/localDb.ts`, `src/services/syncManager.ts`, `src/hooks/useArticleState.ts`)
 - 已读/未读状态即时持久化到 IndexedDB，页面刷新后状态不丢失 (`src/App.tsx`)
 - 星标状态持久化，Reader 中 Star 按钮可点击切换并填充 accent 色 (`src/components/Reader.tsx`)

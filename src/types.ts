@@ -61,3 +61,19 @@ export interface ManualRuleConfig {
 }
 
 export type FetchFrequency = '5m' | '15m' | '30m' | '1h' | 'manual';
+
+// ─── RSSHub ───────────────────────────────────────────────
+
+export interface RSSHubRoute {
+  path: string;
+  name: string;
+  description: string;
+  example: string;
+  categories: string[];
+}
+
+export interface RSSHubNamespace {
+  namespace: string;
+  name: string;
+  routes: RSSHubRoute[];
+}

@@ -11,6 +11,19 @@ import {
 
 const parser = new Parser();
 
+// ─── RSSHub proxy config ───────────────────────────────────
+
+const RSSHUB_PORT = 1201;
+
+async function fetchRSSHubRoutes() {
+  try {
+    const resp = await fetch(`http://localhost:${RSSHUB_PORT}/routes.json`);
+    return resp.ok ? await resp.json() : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Types ────────────────────────────────────────────────
 
 type FetchFrequency = '5m' | '15m' | '30m' | '1h' | 'manual';
@@ -48,9 +61,9 @@ let groupIdCounter = 0;
 // ─── Default data ─────────────────────────────────────────
 
 const defaultFeeds: Omit<StoredFeed, 'intervalId' | 'hasError' | 'isStale' | 'lastFetchedAt'>[] = [
-  { id: 'feed-0', name: 'AI HOT — 精选', feedUrl: 'https://aihot.virxact.com/feed.xml', fetchFrequency: '30m', persisted: false },
-  { id: 'feed-1', name: 'AI HOT — 全部 AI 动态', feedUrl: 'https://aihot.virxact.com/feed/all.xml', fetchFrequency: '1h', persisted: false },
-  { id: 'feed-2', name: 'AI HOT 日报', feedUrl: 'https://aihot.virxact.com/feed/daily.xml', fetchFrequency: '1h', persisted: false },
+  { id: 'feed-0', name: 'AI HOT — 精选', feedUrl: '/rss/aihot/feed', fetchFrequency: '30m', persisted: false },
+  { id: 'feed-1', name: 'AI HOT — 全部 AI 动态', feedUrl: '/rss/aihot/all', fetchFrequency: '1h', persisted: false },
+  { id: 'feed-2', name: 'AI HOT 日报', feedUrl: '/rss/aihot/daily', fetchFrequency: '1h', persisted: false },
 ];
 
 const defaultGroups: StoredGroup[] = [
@@ -75,7 +88,23 @@ const FREQ_MS: Record<FetchFrequency, number | null> = {
 
 async function fetchFeed(entry: StoredFeed): Promise<any> {
   try {
-    const data = await parser.parseURL(entry.feedUrl);
+    const url = entry.feedUrl.startsWith('/rss/')
+      ? `http://localhost:${RSSHUB_PORT}${entry.feedUrl.replace(/^\/rss/, '')}`
+      : entry.feedUrl;
+    const data = await parser.parseURL(url);
+
+    // Replace B站 iframe with official embed player (blackboard player blocked by Referer check)
+    if (data?.items && (entry.feedUrl.includes('bilibili') || entry.feedUrl.includes('bili'))) {
+      for (const item of data.items) {
+        if (item.content) {
+          item.content = item.content.replace(
+            /<iframe[^>]*src="https?:\/\/www\.bilibili\.com\/blackboard\/[^"]*\?[^"]*bvid=(BV[a-zA-Z0-9]+)[^"]*"[^>]*><\/iframe>/g,
+            (_, bvid) => `<iframe src="https://player.bilibili.com/player.html?bvid=${bvid}&page=1" width="640" height="360" frameborder="0" allowfullscreen></iframe>`
+          );
+        }
+      }
+    }
+
     entry.cachedData = data;
     entry.lastFetchedAt = Date.now();
     entry.hasError = false;
@@ -252,6 +281,28 @@ async function startServer() {
 
   await initTables();
   await initDefaultData();
+
+  // ── RSSHub proxy ────────────────────────────────────────
+
+  app.use('/rss', async (req, res) => {
+    try {
+      // Strip /rss prefix - RSSHub serves routes at root
+      const rssPath = req.originalUrl.replace(/^\/rss/, '');
+      const targetUrl = `http://localhost:${RSSHUB_PORT}${rssPath}`;
+      const resp = await fetch(targetUrl);
+      res.status(resp.status);
+      const ct = resp.headers.get('content-type') || 'application/xml';
+      res.set('Content-Type', ct);
+      res.send(await resp.text());
+    } catch {
+      res.status(502).json({ error: 'RSSHub unavailable' });
+    }
+  });
+
+  app.get('/api/rsshub/routes', async (_req, res) => {
+    const routes = await fetchRSSHubRoutes();
+    res.json(routes);
+  });
 
   // ── Feed APIs ──────────────────────────────────────────
 

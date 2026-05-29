@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ArticleList from './components/ArticleList';
 import Reader from './components/Reader';
@@ -196,20 +196,20 @@ export default function App() {
 
   // ── Filtering ─────────────────────────────────────────
 
-  const selectedArticle = articles.find(a => a.id === selectedArticleId) || null;
+  const selectedArticle = useMemo(
+    () => articles.find(a => a.id === selectedArticleId) || null,
+    [articles, selectedArticleId]
+  );
 
   const { markRead, markUnread, toggleRead, toggleStar } = useArticleState({ articles, setArticles });
 
-  const filteredArticles = (() => {
+  const filteredArticles = useMemo(() => {
     let result = articles;
-    // Source filter (sidebar feed click)
     if (selectedSource) {
       result = result.filter(a => a.source === selectedSource);
     }
-    // Group rule filter (smart group click)
     if (selectedGroupId) {
-      const allGroups = [...groups];
-      const group = allGroups.find(g => g.id === selectedGroupId);
+      const group = groups.find(g => g.id === selectedGroupId);
       if (group && group.rule.kind === 'keyword' && 'keywords' in group.rule.config) {
         const { keywords, matchTitle, matchSummary, matchTags } = group.rule.config;
         if (keywords && keywords.length > 0) {
@@ -226,21 +226,25 @@ export default function App() {
       }
     }
     return result;
-  })();
+  }, [articles, selectedSource, selectedGroupId, groups]);
+
+  const filteredArticlesRef = useRef(filteredArticles);
+  filteredArticlesRef.current = filteredArticles;
 
   const navigateArticle = useCallback((direction: 'prev' | 'next') => {
-    const idx = filteredArticles.findIndex(a => a.id === selectedArticleId);
+    const currentList = filteredArticlesRef.current;
+    const idx = currentList.findIndex(a => a.id === selectedArticleId);
     let targetId: string | null = null;
-    if (direction === 'next' && idx >= 0 && idx < filteredArticles.length - 1) {
-      targetId = filteredArticles[idx + 1].id;
+    if (direction === 'next' && idx >= 0 && idx < currentList.length - 1) {
+      targetId = currentList[idx + 1].id;
     } else if (direction === 'prev' && idx > 0) {
-      targetId = filteredArticles[idx - 1].id;
+      targetId = currentList[idx - 1].id;
     }
     if (targetId) {
       setSelectedArticleId(targetId);
       markRead(targetId);
     }
-  }, [filteredArticles, selectedArticleId, markRead]);
+  }, [selectedArticleId, markRead]);
 
   const filteredIndex = filteredArticles.findIndex(a => a.id === selectedArticleId);
   const filteredTotal = filteredArticles.length;
@@ -305,10 +309,10 @@ export default function App() {
 
   // ── Dynamic unread counts ──────────────────────────────
 
-  const feedsWithCounts = feeds.map(f => ({
+  const feedsWithCounts = useMemo(() => feeds.map(f => ({
     ...f,
     unreadCount: articles.filter(a => a.source === f.name && !a.isRead).length,
-  }));
+  })), [feeds, articles]);
 
   // ── Render ────────────────────────────────────────────
 

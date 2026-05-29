@@ -2,6 +2,7 @@ import { cn } from "../utils";
 import { mockGroups, mockTags } from "../mockData";
 import { Feed, SmartGroup, Article } from "../types";
 import type { ReactNode } from "react";
+import { memo } from "react";
 import {
   Sun, Cpu, BookOpen, Zap, PenTool, PlayCircle,
   Menu, Plus, ChevronDown, CircleAlert, Tag
@@ -30,7 +31,7 @@ const iconMap: Record<string, ReactNode> = {
   PlayCircle: <PlayCircle className="w-4 h-4" />,
 };
 
-export default function Sidebar({
+function Sidebar({
   className,
   feeds = [],
   groups = [],
@@ -207,3 +208,5 @@ export default function Sidebar({
     </div>
   );
 }
+
+export default memo(Sidebar);
